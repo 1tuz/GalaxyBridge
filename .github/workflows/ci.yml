@@ -205,15 +205,37 @@ jobs:
       - name: Check publication hygiene
         run: python3 scripts/check-public-tree.py
 
+      # Exact-key only: never restore a partial/stale native binary set.
       - id: native-cache
-        name: Cache reusable native artifacts
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        name: Restore native artifacts cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             out/macos-arm64-release/artifacts/adb
             out/macos-arm64-release/artifacts/scrcpy
             out/macos-arm64-release/artifacts/quic-backend
-          key: macos-native-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('native/**', 'third_party/adb-owned/**', 'third_party/scrcpy/**', 'third_party/scrcpy-gb-sync/**', '**/Cargo.toml', '**/Cargo.lock', 'scripts/build-owned-adb.sh', 'scripts/build-quic-backend.sh', 'scripts/build-scrcpy-gb-sync.sh', 'scripts/native-build-env.sh', 'scripts/stage-redistributable-adb.py', 'scripts/verify-adb-deployment-target.py', 'scripts/test-owned-adb-artifact.py', 'scripts/test-owned-adb-usb-policy.py', 'scripts/public-build.py') }}
+          key: macos-native-v4-${{ runner.os }}-${{ runner.arch }}-rust1.92.0-ndk29.0.14206865-${{ hashFiles('native/galaxybridge-quic/**', 'native/galaxybridge-quic-backend/**', 'native/galaxybridge-quic-media/**', 'third_party/adb-owned/**', 'third_party/scrcpy/**', 'third_party/scrcpy-gb-sync/**', 'scripts/build-owned-adb.sh', 'scripts/build-quic-backend.sh', 'scripts/build-scrcpy-gb-sync.sh', 'scripts/native-build-env.sh', 'scripts/stage-redistributable-adb.py') }}
+
+      - id: native
+        name: Validate cached native artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$BUILD_DIR/artifacts"
+          if [[ "${{ steps.native-cache.outputs.cache-hit }}" == 'true' ]]; then
+            if python3 scripts/public-build.py validate-native --build-dir "$BUILD_DIR"; then
+              echo 'reuse=true' >> "$GITHUB_OUTPUT"
+              echo 'GB_REUSE_NATIVE_ARTIFACTS=1' >> "$GITHUB_ENV"
+              echo 'Validated native cache hit; skipping Java/Android SDK/NDK/Rust toolchains.'
+              exit 0
+            fi
+            echo 'Cached native artifacts failed validation; forcing rebuild.'
+            rm -rf \
+              "$BUILD_DIR/artifacts/adb" \
+              "$BUILD_DIR/artifacts/scrcpy" \
+              "$BUILD_DIR/artifacts/quic-backend"
+          fi
+          echo 'reuse=false' >> "$GITHUB_OUTPUT"
 
       - name: Cache incremental Swift build
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -221,22 +243,19 @@ jobs:
           path: |
             out/macos-arm64-release/swift
             out/macos-arm64-release/dependency-cache/swiftpm
-          key: macos-swift-v3-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.swift', 'Package.resolved', 'Sources/**', 'protocol/**', 'macos/**/*.swift', 'macos/**/*.plist') }}
+            .build/public-pins
+          key: macos-swift-v4-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.swift', 'Package.resolved', 'Sources/**', 'protocol/**', 'macos/**/*.swift', 'macos/**/*.plist', 'macos/**/*.xcprivacy', 'macos/**/*.icns') }}
           restore-keys: |
-            macos-swift-v3-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Reuse cached native artifacts
-        if: steps.native-cache.outputs.cache-hit == 'true'
-        run: echo 'GB_REUSE_NATIVE_ARTIFACTS=1' >> "$GITHUB_ENV"
+            macos-swift-v4-${{ runner.os }}-${{ runner.arch }}-
 
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        if: steps.native-cache.outputs.cache-hit != 'true'
+        if: steps.native.outputs.reuse != 'true'
         with:
           distribution: temurin
           java-version: '21'
 
-      - name: Prepare native build cache directories
-        if: steps.native-cache.outputs.cache-hit != 'true'
+      - name: Prepare native build dependency caches
+        if: steps.native.outputs.reuse != 'true'
         run: |
           mkdir -p \
             "$BUILD_DIR/dependency-cache/cargo" \
@@ -245,7 +264,7 @@ jobs:
             "$HOME/.rustup/tmp"
 
       - name: Cache native build dependencies
-        if: steps.native-cache.outputs.cache-hit != 'true'
+        if: steps.native.outputs.reuse != 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -253,12 +272,12 @@ jobs:
             out/macos-arm64-release/tools
             ~/.rustup/toolchains
             ~/.rustup/tmp
-          key: macos-native-deps-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Cargo.lock', 'scripts/build-tools-requirements.txt') }}
+          key: macos-native-deps-v3-${{ runner.os }}-${{ runner.arch }}-rust1.92.0-ndk29.0.14206865-${{ hashFiles('native/galaxybridge-quic/**/Cargo.lock', 'native/galaxybridge-quic-backend/**/Cargo.lock', 'native/galaxybridge-quic-media/**/Cargo.lock', 'scripts/build-tools-requirements.txt') }}
           restore-keys: |
-            macos-native-deps-v2-${{ runner.os }}-${{ runner.arch }}-
+            macos-native-deps-v3-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Select native build toolchains
-        if: steps.native-cache.outputs.cache-hit != 'true'
+        if: steps.native.outputs.reuse != 'true'
         shell: bash
         run: |
           test "$(uname -m)" = arm64
@@ -278,16 +297,31 @@ jobs:
         run: cmake --preset macos-arm64-release -DGB_BUILD_JOBS=4
 
       - name: Build native artifacts on cache miss
-        if: steps.native-cache.outputs.cache-hit != 'true'
+        if: steps.native.outputs.reuse != 'true'
         run: |
           cmake --build --preset macos-arm64-release --target native
+          python3 scripts/public-build.py validate-native --build-dir "$BUILD_DIR"
           echo 'GB_REUSE_NATIVE_ARTIFACTS=1' >> "$GITHUB_ENV"
+
+      # Save immediately so a later Swift/packaging failure still seeds the next run.
+      - name: Save native artifacts cache
+        if: steps.native.outputs.reuse != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            out/macos-arm64-release/artifacts/adb
+            out/macos-arm64-release/artifacts/scrcpy
+            out/macos-arm64-release/artifacts/quic-backend
+          key: ${{ steps.native-cache.outputs.cache-primary-key }}
 
       - name: Fast Swift compatibility check
         run: sh scripts/test-macos-companion-diagnostics.sh
 
       - name: Build macOS app
-        run: cmake --build --preset macos-arm64-release --target macos-app
+        run: |
+          # macos-app depends on CMake target native; reuse path only validates.
+          test "${GB_REUSE_NATIVE_ARTIFACTS:-}" = 1
+          cmake --build --preset macos-arm64-release --target macos-app
 
       - name: Package macOS DMG
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

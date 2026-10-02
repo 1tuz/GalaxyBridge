@@ -67,6 +67,7 @@ def validate_cached_native(build, env):
     if not producer_pin.is_file() or producer_pin.read_text().strip() != sha(producer):
         raise SystemExit('Cached QUIC backend producer pin does not match cached scrcpy producer.')
     generate_pins(build)
+    print('Validated native artifacts: adb, scrcpy, quic-backend.')
 
 def generate_pins(build):
     artifacts = build / 'artifacts'
@@ -194,8 +195,15 @@ def check(build, env):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['native', 'macos-app', 'android-apk', 'package', 'check'])
+    parser.add_argument('action', choices=['native', 'validate-native', 'macos-app', 'android-apk', 'package', 'check'])
     parser.add_argument('--build-dir', type=Path, required=True)
     args = parser.parse_args(); build = args.build_dir.resolve(); build.mkdir(parents=True, exist_ok=True)
     environment = build_environment(build, os.environ)
-    {'native': native, 'macos-app': macos_app, 'android-apk': android_apk, 'package': package, 'check': check}[args.action](build, environment)
+    {
+        'native': native,
+        'validate-native': validate_cached_native,
+        'macos-app': macos_app,
+        'android-apk': android_apk,
+        'package': package,
+        'check': check,
+    }[args.action](build, environment)
