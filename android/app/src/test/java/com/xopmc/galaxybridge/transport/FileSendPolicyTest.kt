@@ -14,13 +14,20 @@ class FileSendPolicyTest {
         assertFalse(FileSendPolicy.enabled("unknown"))
         assertEquals(BuildConfig.DISTRIBUTION != "play", AndroidOutgoingFiles.enabled)
     }
-    @Test fun onlyOneGrantedContentUriCanEnterSharePreview() {
-        assertTrue(FileSendPolicy.acceptsShare("android.intent.action.SEND", "content", 1, true))
-        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND", "file", 1, true))
-        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND", "content", 1, false))
-        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND", "content", 2, true))
-        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND_MULTIPLE", "content", 1, true))
-        assertFalse(FileSendPolicy.acceptsShare(null, null, 0, true))
+    @Test fun grantedContentUrisCanEnterSingleOrMultipleSharePreview() {
+        assertTrue(FileSendPolicy.acceptsShare("android.intent.action.SEND", listOf("content"), 1, true))
+        assertTrue(FileSendPolicy.acceptsShare(
+            "android.intent.action.SEND_MULTIPLE",
+            listOf("content", "content", "content"),
+            3,
+            true,
+        ))
+        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND", listOf("file"), 1, true))
+        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND", listOf("content"), 1, false))
+        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND", listOf("content", "content"), 2, true))
+        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND_MULTIPLE", listOf("content", "file"), 2, true))
+        assertFalse(FileSendPolicy.acceptsShare(null, emptyList(), 0, true))
+        assertFalse(FileSendPolicy.acceptsShare("android.intent.action.SEND_MULTIPLE", List(101) { "content" }, 101, true))
     }
     @Test fun ackUsesExistingWireTagAndDedicatedFileRoute() {
         val wire = Envelope.newBuilder().setTransferAck(TransferAck.newBuilder()

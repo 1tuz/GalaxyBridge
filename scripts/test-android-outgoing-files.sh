@@ -23,6 +23,9 @@ for flavor in ('internal', 'direct', 'play'):
         activity = activities[0]
         assert activity.get(android + 'exported') == 'true'
         actions = [e.get(android + 'name') for e in activity.findall('intent-filter/action')]
-        assert actions == ['android.intent.action.SEND'], (flavor, actions)
-    print('PASS', flavor, 'single-file share target exposure')
+        assert actions == [
+            'android.intent.action.SEND',
+            'android.intent.action.SEND_MULTIPLE',
+        ], (flavor, actions)
+    print('PASS', flavor, 'single-file and multi-file share target exposure')
 PY

@@ -1,6 +1,7 @@
 package com.xopmc.galaxybridge.service
 
 import android.Manifest
+import android.content.Context
 import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
@@ -124,6 +125,18 @@ class GalaxyBridgeForegroundService : Service() {
         const val NOTIFICATION_ID = 4_701
         const val PREFERENCES = "galaxybridge"
         const val PENDING_PAIRING = "pending_pairing"
+        const val PREFERENCE_BRIDGE_USER_ENABLED = "bridge_user_enabled"
         private const val TAG = "GalaxyBridgePairing"
+
+        fun isUserEnabled(context: Context): Boolean =
+            context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+                .getBoolean(PREFERENCE_BRIDGE_USER_ENABLED, true)
+
+        fun setUserEnabled(context: Context, enabled: Boolean) {
+            context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(PREFERENCE_BRIDGE_USER_ENABLED, enabled)
+                .apply()
+        }
     }
 }

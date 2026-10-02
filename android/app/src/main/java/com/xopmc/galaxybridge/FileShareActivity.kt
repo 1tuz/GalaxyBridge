@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.xopmc.galaxybridge.service.GalaxyBridgeForegroundService
 import com.xopmc.galaxybridge.transport.AndroidOutgoingFiles
+import com.xopmc.galaxybridge.transport.FileSendPolicy.MAX_SHARE_ITEMS
 import com.xopmc.galaxybridge.transport.FileSendPreview
 import com.xopmc.galaxybridge.transport.FileSendPolicy
 import com.xopmc.galaxybridge.transport.OutgoingFilePhase
@@ -50,42 +53,55 @@ class FileShareActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!AndroidOutgoingFiles.enabled) { finish(); return }
-        @Suppress("DEPRECATION")
-        val uri = runCatching {
-            if (intent.action == Intent.ACTION_SEND) intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri else null
-        }.getOrNull()
-        val invalid = intent.action == Intent.ACTION_SEND && !runCatching {
-            FileSendPolicy.acceptsShare(intent.action, uri?.scheme, intent.clipData?.itemCount ?: 1,
-                intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+        val shared = sharedUris(intent)
+        val hasReadGrant = intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0
+        val invalid = intent.action in setOf(Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE) && !runCatching {
+            FileSendPolicy.acceptsShare(intent.action, shared.map { it.scheme }, shared.size, hasReadGrant)
         }.getOrDefault(false)
         setContent {
             GalaxyBridgeTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    FileSendScreen(if (invalid) null else uri, invalid, ::finish)
+                    FileSendScreen(if (invalid) emptyList() else shared, invalid, ::finish)
                 }
             }
         }
     }
+
+    @Suppress("DEPRECATION")
+    private fun sharedUris(intent: Intent): List<Uri> {
+        val extras = when (intent.action) {
+            Intent.ACTION_SEND -> listOfNotNull(intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri)
+            Intent.ACTION_SEND_MULTIPLE -> intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM).orEmpty()
+            else -> emptyList()
+        }
+        val clips = intent.clipData?.let { clip ->
+            (0 until clip.itemCount).mapNotNull { clip.getItemAt(it).uri }
+        }.orEmpty()
+        return (extras + clips).distinctBy(Uri::toString).take(MAX_SHARE_ITEMS + 1)
+    }
 }
 
-@Composable private fun FileSendScreen(initialURI: Uri?, invalidShare: Boolean, close: () -> Unit) {
+@Composable private fun FileSendScreen(initialURIs: List<Uri>, invalidShare: Boolean, close: () -> Unit) {
     val context = LocalContext.current
     val manager = remember { AndroidOutgoingFiles.get(context) }
     val scope = rememberCoroutineScope()
-    var uri by remember { mutableStateOf(initialURI) }
-    var preview by remember { mutableStateOf<FileSendPreview?>(null) }
+    var uris by remember { mutableStateOf(initialURIs) }
+    var previews by remember { mutableStateOf<List<FileSendPreview>>(emptyList()) }
     var error by remember { mutableStateOf(invalidShare) }
     var loading by remember { mutableStateOf(false) }
     var preparing by remember { mutableStateOf(false) }
     var preparation by remember { mutableStateOf<Job?>(null) }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { selected ->
-        if (selected != null) uri = selected
+    val picker = rememberLauncherForActivityResult(OpenMultipleDocuments()) { selected ->
+        if (selected.isNotEmpty()) uris = selected.take(MAX_SHARE_ITEMS)
     }
-    LaunchedEffect(uri) {
-        preview = null
-        val selected = uri ?: return@LaunchedEffect
+    LaunchedEffect(uris) {
+        previews = emptyList()
+        if (uris.isEmpty()) return@LaunchedEffect
         loading = true
-        try { preview = manager.preview(selected); error = false }
+        try {
+            previews = uris.map { manager.preview(it) }
+            error = false
+        }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { error = true }
         finally { loading = false }
@@ -97,29 +113,35 @@ class FileShareActivity : ComponentActivity() {
         Text(stringResource(R.string.file_send_hint))
         if (manager.currentOwner() == null) Text(stringResource(R.string.file_send_pair_required))
         if (loading || preparing) Text(stringResource(R.string.file_send_preparing))
-        preview?.let { selected ->
+        if (previews.isNotEmpty()) {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(selected.name, style = MaterialTheme.typography.titleMedium)
+                    previews.forEachIndexed { index, selected ->
+                        Text(selected.name, style = MaterialTheme.typography.titleMedium)
+                        if (index != previews.lastIndex) HorizontalDivider()
+                    }
                     Text(stringResource(R.string.file_send_destination))
-                    Button(enabled = !preparing && manager.currentOwner() == selected.owner, onClick = {
+                    Button(enabled = !preparing && previews.all { manager.currentOwner() == it.owner }, onClick = {
                         preparing = true
                         error = false
                         preparation = scope.launch {
-                            var preparedID: String? = null
+                            val prepared = mutableListOf<Pair<String, String>>()
                             try {
                                 // User-visible activity start; no background activity/permission launch.
+                                GalaxyBridgeForegroundService.setUserEnabled(context, true)
                                 ContextCompat.startForegroundService(context, Intent(context, GalaxyBridgeForegroundService::class.java))
-                                val id = manager.prepare(selected)
-                                preparedID = id
-                                manager.enqueuePrepared(id, selected.owner)
-                                preview = null
-                                uri = null
+                                for (selected in previews) {
+                                    val id = manager.prepare(selected)
+                                    prepared += id to selected.owner
+                                }
+                                for ((id, owner) in prepared) manager.enqueuePrepared(id, owner)
+                                previews = emptyList()
+                                uris = emptyList()
                             } catch (cancelled: CancellationException) {
-                                preparedID?.let { manager.cancel(it, selected.owner) }
+                                prepared.forEach { (id, owner) -> manager.cancel(id, owner) }
                                 throw cancelled
                             } catch (_: Exception) {
-                                preparedID?.let { manager.cancel(it, selected.owner) }
+                                prepared.forEach { (id, owner) -> manager.cancel(id, owner) }
                                 error = true
                             }
                             finally { preparing = false; preparation = null }

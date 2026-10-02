@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
@@ -16,6 +20,7 @@
             android:label="@string/file_send_title" android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
             </intent-filter>
@@ -36,6 +41,22 @@
         <receiver android:name=".catalog.ApplicationCatalogExportReceiver" android:enabled="true" android:exported="true" android:permission="android.permission.DUMP">
             <intent-filter>
                 <action android:name="com.xopmc.galaxybridge.EXPORT_APPLICATION_CATALOG" />
+            </intent-filter>
+        </receiver>
+        <activity
+            android:name=".gallery.GalleryPermissionActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            android:theme="@style/Theme.GalaxyBridge" />
+        <receiver
+            android:name=".gallery.GalleryExportReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.xopmc.galaxybridge.EXPORT_GALLERY_PAGE" />
+                <action android:name="com.xopmc.galaxybridge.EXPORT_GALLERY_MEDIA" />
             </intent-filter>
         </receiver>
         <receiver android:name=".service.RemoteTextInputReceiver" android:enabled="true" android:exported="true" android:permission="android.permission.DUMP">

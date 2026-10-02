@@ -391,6 +391,7 @@ struct DeviceWorkspace: View {
     private var panelContent: some View {
         switch selectedPanel {
         case .applications: ApplicationCatalogPanel(device: device)
+        case .gallery: GalleryPanel(device: device)
         case .files: FilesPanel(deviceID: device.id)
         case .notifications: NotificationsPanel(deviceID: device.id)
         case .sms: SMSPanel(deviceID: device.id)
@@ -1126,11 +1127,12 @@ private struct PlaceholderPanel: View {
 }
 
 private enum Panel: String, CaseIterable, Identifiable {
-    case applications, files, notifications, sms, camera
+    case applications, gallery, files, notifications, sms, camera
     var id: String { rawValue }
     var title: LocalizedStringKey {
         switch self {
         case .applications: "APPLICATIONS"
+        case .gallery: "Gallery"
         case .files: "FILES"
         case .notifications: "NOTIFICATIONS"
         case .sms: "SMS"
@@ -1140,6 +1142,7 @@ private enum Panel: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .applications: "square.grid.3x3.fill"
+        case .gallery: "photo.on.rectangle.angled"
         case .files: "folder"
         case .notifications: "bell"
         case .sms: "message"

@@ -579,6 +579,96 @@ struct ADBClient: Sendable {
         return "/sdcard/Android/data/\(applicationID)/files/application-catalog/\(requestID)"
     }
 
+    func exportGalleryPage(serial: String, requestID: String, offset: Int, limit: Int) throws -> String {
+        guard Self.isRequestID(requestID), offset >= 0, (1 ... 200).contains(limit) else {
+            throw ADBClientError.commandFailed(code: -1, message: "Invalid gallery page request")
+        }
+        let userID = try foregroundAndroidUser(serial: serial)
+        guard let applicationID = try selectedCompanionPackage(serial: serial, userID: userID) else {
+            throw ADBClientError.commandFailed(code: -1, message: "Galaxy Bridge companion is required for gallery access")
+        }
+        let action = "com.xopmc.galaxybridge.EXPORT_GALLERY_PAGE"
+        let receiver = "com.xopmc.galaxybridge.gallery.GalleryExportReceiver"
+        guard try hasReceiver(
+            serial: serial,
+            userID: userID,
+            applicationID: applicationID,
+            receiver: receiver,
+            action: action
+        ) else {
+            throw ADBClientError.commandFailed(code: -1, message: "Galaxy Bridge companion does not support gallery access")
+        }
+        let output = try runRemoteShell(serial: serial, arguments: [
+            "am", "broadcast", "--user", userID, "-W", "--receiver-foreground",
+            "-a", action,
+            "-n", "\(applicationID)/\(receiver)",
+            "--es", "request_id", requestID,
+            "--ei", "offset", String(offset),
+            "--ei", "limit", String(limit),
+        ])
+        guard Self.broadcastSucceeded(output) else {
+            throw ADBClientError.commandFailed(code: -1, message: output)
+        }
+        return "/sdcard/Android/data/\(applicationID)/files/gallery-catalog/\(requestID)"
+    }
+
+    func exportGalleryMedia(serial: String, requestID: String, mediaID: Int64) throws -> String {
+        guard Self.isRequestID(requestID), mediaID > 0 else {
+            throw ADBClientError.commandFailed(code: -1, message: "Invalid gallery media request")
+        }
+        let userID = try foregroundAndroidUser(serial: serial)
+        guard let applicationID = try selectedCompanionPackage(serial: serial, userID: userID) else {
+            throw ADBClientError.commandFailed(code: -1, message: "Galaxy Bridge companion is required for gallery access")
+        }
+        let action = "com.xopmc.galaxybridge.EXPORT_GALLERY_MEDIA"
+        let receiver = "com.xopmc.galaxybridge.gallery.GalleryExportReceiver"
+        guard try hasReceiver(
+            serial: serial,
+            userID: userID,
+            applicationID: applicationID,
+            receiver: receiver,
+            action: action
+        ) else {
+            throw ADBClientError.commandFailed(code: -1, message: "Galaxy Bridge companion does not support gallery access")
+        }
+        let output = try runRemoteShell(serial: serial, arguments: [
+            "am", "broadcast", "--user", userID, "-W", "--receiver-foreground",
+            "-a", action,
+            "-n", "\(applicationID)/\(receiver)",
+            "--es", "request_id", requestID,
+            "--el", "media_id", String(mediaID),
+        ])
+        guard Self.broadcastSucceeded(output) else {
+            throw ADBClientError.commandFailed(code: -1, message: output)
+        }
+        return "/sdcard/Android/data/\(applicationID)/files/gallery-media/\(requestID)"
+    }
+
+    func requestGalleryPermission(serial: String) throws {
+        let userID = try foregroundAndroidUser(serial: serial)
+        guard let applicationID = try selectedCompanionPackage(serial: serial, userID: userID) else {
+            throw ADBClientError.commandFailed(code: -1, message: "Galaxy Bridge companion is required for gallery access")
+        }
+        _ = try runRemoteShell(serial: serial, arguments: [
+            "am", "start", "--user", userID, "-W",
+            "-n", "\(applicationID)/com.xopmc.galaxybridge.gallery.GalleryPermissionActivity",
+        ])
+    }
+
+    func removeGalleryExport(serial: String, remotePath: String) throws {
+        let validPrefixes = Self.knownCompanionPackageIDs.flatMap { applicationID in
+            [
+                "/sdcard/Android/data/\(applicationID)/files/gallery-catalog/",
+                "/sdcard/Android/data/\(applicationID)/files/gallery-media/",
+            ]
+        }
+        guard validPrefixes.contains(where: { prefix in
+            guard remotePath.hasPrefix(prefix) else { return false }
+            return Self.isRequestID(String(remotePath.dropFirst(prefix.count)))
+        }) else { return }
+        _ = try runRemoteShell(serial: serial, arguments: ["rm", "-rf", "--", remotePath])
+    }
+
     func removeApplicationCatalogExport(serial: String, remotePath: String) throws {
         let validPrefixes = Self.knownCompanionPackageIDs.map {
             "/sdcard/Android/data/\($0)/files/application-catalog/"

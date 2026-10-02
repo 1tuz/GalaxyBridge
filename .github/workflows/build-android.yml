@@ -1,0 +1,78 @@
+name: Build Android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'protocol/**'
+      - 'scripts/test-android-*.sh'
+      - 'scripts/test-android-*.py'
+      - '.github/workflows/build-android.yml'
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'protocol/**'
+      - 'scripts/test-android-*.sh'
+      - 'scripts/test-android-*.py'
+      - '.github/workflows/build-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'platforms;android-37.0' \
+            'build-tools;37.0.0'
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+
+      - name: Gallery / multishare / tile surface
+        run: sh scripts/test-android-gallery-multishare-tile-surface.sh
+
+      - name: Outgoing files contract
+        run: sh scripts/test-android-outgoing-files.sh
+
+      - name: Direct release contract
+        run: sh scripts/test-android-direct-release.sh
+
+      - name: Assemble Direct and Internal debug APKs
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon --console=plain \
+            :app:assembleDirectDebug \
+            :app:assembleInternalDebug
+
+      - name: Collect APKs
+        shell: bash
+        run: |
+          mkdir -p out/android-apks
+          find android/app/build/outputs/apk -name '*.apk' -print -exec cp {} out/android-apks/ \;
+          ls -la out/android-apks
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-direct-internal-debug-apks
+          path: out/android-apks/
+          if-no-files-found: error
+          retention-days: 14

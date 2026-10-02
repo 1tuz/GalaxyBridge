@@ -5,6 +5,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Activity
 import android.app.NotificationManager
 import android.app.role.RoleManager
+import android.app.StatusBarManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -12,6 +13,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.graphics.drawable.Icon
 import android.provider.DocumentsContract
 import android.provider.Settings
 import android.util.Base64
@@ -96,6 +98,7 @@ import com.xopmc.galaxybridge.qr.QrScanGate
 import com.xopmc.galaxybridge.security.DeviceIdentityStore
 import com.xopmc.galaxybridge.service.CameraCaptureService
 import com.xopmc.galaxybridge.service.GalaxyAccessibilityService
+import com.xopmc.galaxybridge.service.GalaxyBridgeTileService
 import com.xopmc.galaxybridge.service.GalaxyBridgeForegroundService
 import com.xopmc.galaxybridge.service.ForegroundClipboardMonitor
 import com.xopmc.galaxybridge.service.GalaxyNotificationListenerService
@@ -177,6 +180,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Settings grants/revocations are read again; returning never opens a prompt.
         startBridgeServiceIfAllowed()
+        requestQuickSettingsTileOnceIfEligible()
         refreshToken++
     }
 
@@ -581,11 +585,34 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startBridgeServiceIfAllowed(action: String? = null) {
+        if (!GalaxyBridgeForegroundService.isUserEnabled(this)) return
         if (!hasLocalNetworkAccess()) return
         ContextCompat.startForegroundService(
             this,
             Intent(this, GalaxyBridgeForegroundService::class.java).also { it.action = action },
         )
+    }
+
+    private fun requestQuickSettingsTileOnceIfEligible() {
+        if (Build.VERSION.SDK_INT < 33) return
+        val preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE)
+        val paired = !preferences.getString("paired_host_id", null).isNullOrBlank()
+        if (!paired || preferences.getBoolean(TILE_ADD_PROMPTED, false)) return
+        val manager = getSystemService(StatusBarManager::class.java) ?: return
+        manager.requestAddTileService(
+            ComponentName(this, GalaxyBridgeTileService::class.java),
+            getString(R.string.app_name),
+            Icon.createWithResource(this, R.mipmap.ic_galaxy_bridge),
+            mainExecutor,
+        ) { result ->
+            if (result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
+                result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED ||
+                result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_NOT_ADDED
+            ) {
+                preferences.edit { putBoolean(TILE_ADD_PROMPTED, true) }
+            }
+            GalaxyBridgeTileService.requestRefresh(this)
+        }
     }
 
     private fun isAccessibilityEnabled(): Boolean =
@@ -610,6 +637,7 @@ class MainActivity : ComponentActivity() {
         private const val SETUP_FEATURES = "setup_selected_features_v1"
         private const val SETUP_CHOICES_CONFIRMED = "setup_choices_confirmed_v1"
         private const val STATE_RUNTIME_PERMISSION_IN_FLIGHT = "runtime_permission_in_flight"
+        private const val TILE_ADD_PROMPTED = "quick_settings_tile_prompted_v1"
         private const val SAF_RW_FLAGS = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         private val CALL_PERMISSIONS = arrayOf(
             Manifest.permission.READ_PHONE_STATE,
