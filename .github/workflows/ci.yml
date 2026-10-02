@@ -33,12 +33,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: gradle
-          cache-dependency-path: |
-            android/**/*.gradle*
-            android/gradle/wrapper/gradle-wrapper.properties
 
-      - name: Restore Gradle cache
+      - name: Prepare Android cache directories
+        run: |
+          mkdir -p \
+            "$BUILD_DIR/dependency-cache/gradle" \
+            "$BUILD_DIR/tools"
+
+      - name: Cache Gradle + build tools
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -51,7 +53,6 @@ jobs:
       - name: Android SDK + build tools
         shell: bash
         run: |
-          mkdir -p "$BUILD_DIR/dependency-cache/gradle"
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             'platforms;android-37.0' \
             'build-tools;37.0.0'
@@ -75,6 +76,8 @@ jobs:
           mkdir -p out/artifacts-android
           find out/macos-arm64-release/artifacts -maxdepth 1 -name 'GalaxyBridge-*.apk*' -exec cp {} out/artifacts-android/ \;
           ls -la out/artifacts-android
+          # Keep cache paths present for the post-job cache save.
+          mkdir -p "$BUILD_DIR/dependency-cache/gradle" "$BUILD_DIR/tools"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -102,7 +105,16 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Restore Cargo / SwiftPM / tools cache
+      - name: Prepare macOS cache directories
+        run: |
+          mkdir -p \
+            "$BUILD_DIR/dependency-cache/cargo" \
+            "$BUILD_DIR/dependency-cache/swiftpm" \
+            "$BUILD_DIR/tools" \
+            "$HOME/.rustup/toolchains" \
+            "$HOME/.rustup/tmp"
+
+      - name: Cache Cargo / SwiftPM / tools
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -119,7 +131,6 @@ jobs:
         shell: bash
         run: |
           test "$(uname -m)" = arm64
-          mkdir -p "$BUILD_DIR/dependency-cache/cargo" "$BUILD_DIR/dependency-cache/swiftpm"
           rustup toolchain install 1.92.0 --profile minimal
           rustup component add --toolchain 1.92.0 rustfmt
           rustup target add --toolchain 1.92.0 aarch64-apple-darwin aarch64-linux-android
@@ -154,6 +165,12 @@ jobs:
             --adb-runtime out/macos-arm64-release/artifacts/adb \
             --release
           find out/macos-arm64-release/packages -type f | sort
+          mkdir -p \
+            "$BUILD_DIR/dependency-cache/cargo" \
+            "$BUILD_DIR/dependency-cache/swiftpm" \
+            "$BUILD_DIR/tools" \
+            "$HOME/.rustup/toolchains" \
+            "$HOME/.rustup/tmp"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

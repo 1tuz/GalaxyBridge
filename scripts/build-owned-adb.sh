@@ -36,10 +36,18 @@ if ! grep -q 'Galaxy Bridge owned-runtime contract v1' "$GB_SOURCE/vendor/adb/ad
   gb_patch "$GB_ROOT/third_party/adb-owned/patches/0001-owned-runtime.patch"
 fi
 export MACOSX_DEPLOYMENT_TARGET=14.0
+# Upstream ADB usb_osx.cpp still mixes anonymous USB enums and uses
+# kIOMasterPortDefault; silence known Xcode 16+/macOS SDK deprecations only.
+GB_ADB_C_ARGS='-mmacosx-version-min=14.0 -Wno-deprecated-declarations'
+GB_ADB_CXX_ARGS='-mmacosx-version-min=14.0 -Wno-deprecated-declarations -Wno-deprecated-anon-enum-enum-conversion'
 if [[ ! -f "$GB_BUILD/build.ninja" ]]; then
   meson setup "$GB_BUILD" "$GB_SOURCE" --buildtype=release \
     --default-library=static --wrap-mode=forcefallback -Dlibusb:default_library=shared -Dgenerate_manpages=disabled \
-    -Dc_args=-mmacosx-version-min=14.0 -Dcpp_args=-mmacosx-version-min=14.0 \
+    -Dc_args="$GB_ADB_C_ARGS" -Dcpp_args="$GB_ADB_CXX_ARGS" \
+    -Dc_link_args=-mmacosx-version-min=14.0 -Dcpp_link_args=-mmacosx-version-min=14.0
+else
+  meson configure "$GB_BUILD" \
+    -Dc_args="$GB_ADB_C_ARGS" -Dcpp_args="$GB_ADB_CXX_ARGS" \
     -Dc_link_args=-mmacosx-version-min=14.0 -Dcpp_link_args=-mmacosx-version-min=14.0
 fi
 gb_patch "$GB_ROOT/third_party/adb-owned/patches/0002-nonseizing-usb.patch"
