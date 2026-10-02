@@ -327,8 +327,8 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
+          # package-macos-direct.py refuses an existing output dir and mkdir's it itself.
           rm -rf out/macos-arm64-release/packages
-          mkdir -p out/macos-arm64-release/packages
           python3 scripts/package-macos-direct.py \
             out/macos-arm64-release/artifacts/GalaxyBridge.app \
             out/macos-arm64-release/packages \
