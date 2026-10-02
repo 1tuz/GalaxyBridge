@@ -14,15 +14,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: macOS + Android
+  android:
+    name: Android
     runs-on: macos-15
-    timeout-minutes: 90
+    timeout-minutes: 45
     env:
-      GB_BUILD_JOBS: '2'
-      RUSTUP_TOOLCHAIN: '1.92.0'
       BUILD_DIR: out/macos-arm64-release
-      CARGO_HOME: ${{ github.workspace }}/out/macos-arm64-release/dependency-cache/cargo
       GRADLE_USER_HOME: ${{ github.workspace }}/out/macos-arm64-release/dependency-cache/gradle
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -41,23 +38,88 @@ jobs:
             android/**/*.gradle*
             android/gradle/wrapper/gradle-wrapper.properties
 
-      - name: Restore dependency caches
+      - name: Restore Gradle cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            out/macos-arm64-release/dependency-cache
+            out/macos-arm64-release/dependency-cache/gradle
+            out/macos-arm64-release/tools
+          key: android-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'scripts/build-tools-requirements.txt') }}
+          restore-keys: |
+            android-deps-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Android SDK + build tools
+        shell: bash
+        run: |
+          mkdir -p "$BUILD_DIR/dependency-cache/gradle"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'platforms;android-37.0' \
+            'build-tools;37.0.0'
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          python3 scripts/bootstrap-build-tools.py --build-dir "$BUILD_DIR"
+          echo "$PWD/$BUILD_DIR/tools/bin" >> "$GITHUB_PATH"
+
+      - name: Configure CMake
+        run: cmake --preset macos-arm64-release -DGB_BUILD_JOBS=2
+
+      - name: Gallery / multishare / tile surface
+        run: sh scripts/test-android-gallery-multishare-tile-surface.sh
+
+      - name: Build Direct APK
+        run: cmake --build --preset macos-arm64-release --target android-apk
+
+      - name: Collect Android artifacts
+        shell: bash
+        run: |
+          mkdir -p out/artifacts-android
+          find out/macos-arm64-release/artifacts -maxdepth 1 -name 'GalaxyBridge-*.apk*' -exec cp {} out/artifacts-android/ \;
+          ls -la out/artifacts-android
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: android-direct-${{ github.sha }}
+          path: out/artifacts-android/
+          if-no-files-found: error
+          retention-days: 14
+
+  macos:
+    name: macOS
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      GB_BUILD_JOBS: '2'
+      RUSTUP_TOOLCHAIN: '1.92.0'
+      BUILD_DIR: out/macos-arm64-release
+      CARGO_HOME: ${{ github.workspace }}/out/macos-arm64-release/dependency-cache/cargo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Restore Cargo / SwiftPM / tools cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            out/macos-arm64-release/dependency-cache/cargo
+            out/macos-arm64-release/dependency-cache/swiftpm
             out/macos-arm64-release/tools
             ~/.rustup/toolchains
             ~/.rustup/tmp
-          key: build-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved', '**/Cargo.lock', 'android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'scripts/build-tools-requirements.txt') }}
+          key: macos-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved', '**/Cargo.lock', 'scripts/build-tools-requirements.txt') }}
           restore-keys: |
-            build-deps-${{ runner.os }}-${{ runner.arch }}-
+            macos-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Select source build toolchains
         shell: bash
         run: |
           test "$(uname -m)" = arm64
-          mkdir -p "$BUILD_DIR/dependency-cache/cargo" "$BUILD_DIR/dependency-cache/gradle" "$BUILD_DIR/dependency-cache/swiftpm"
+          mkdir -p "$BUILD_DIR/dependency-cache/cargo" "$BUILD_DIR/dependency-cache/swiftpm"
           rustup toolchain install 1.92.0 --profile minimal
           rustup component add --toolchain 1.92.0 rustfmt
           rustup target add --toolchain 1.92.0 aarch64-apple-darwin aarch64-linux-android
@@ -76,27 +138,26 @@ jobs:
       - name: Check Swift SDK compatibility
         run: sh scripts/test-macos-companion-diagnostics.sh
 
-      - name: Gallery / multishare / tile surface
-        run: sh scripts/test-android-gallery-multishare-tile-surface.sh
-
-      - name: Build Android
-        run: cmake --build --preset macos-arm64-release --target android-apk
-
-      - name: Build macOS
+      - name: Build macOS app
         run: cmake --build --preset macos-arm64-release --target macos-app
 
       - name: Run automated checks
         run: cmake --build --preset macos-arm64-release --target check
 
-      - name: Package unsigned development artifacts
-        run: cmake --build --preset macos-arm64-release --target package
-
-      - name: List packaged outputs
-        run: find out/macos-arm64-release/packages -type f | sort
+      - name: Package macOS DMG
+        shell: bash
+        run: |
+          mkdir -p out/macos-arm64-release/packages
+          python3 scripts/package-macos-direct.py \
+            out/macos-arm64-release/artifacts/GalaxyBridge.app \
+            out/macos-arm64-release/packages \
+            --adb-runtime out/macos-arm64-release/artifacts/adb \
+            --release
+          find out/macos-arm64-release/packages -type f | sort
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: galaxybridge-macos-android-${{ github.sha }}
+          name: macos-arm64-${{ github.sha }}
           path: out/macos-arm64-release/packages/
           if-no-files-found: error
           retention-days: 14
