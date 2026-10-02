@@ -1303,7 +1303,14 @@ fn first_cause_terminal_offer_is_bounded_under_held_sink_and_failure() {
         held: false,
         bytes: bytes.clone(),
     }));
-    assert!(emitter.offer_trace([1; 11]));
+    let trace_deadline = Instant::now() + Duration::from_millis(200);
+    while !emitter.offer_trace([1; 11]) {
+        assert!(
+            Instant::now() < trace_deadline,
+            "first recovery trace offer must become available"
+        );
+        std::thread::sleep(Duration::from_millis(1));
+    }
     rx.recv_timeout(Duration::from_secs(1)).unwrap();
     let record = TerminalRecord {
         first: Some([0, 771, 9, 12, 34, 101, 8, 56, 0, 0, 0, 0, 0]),

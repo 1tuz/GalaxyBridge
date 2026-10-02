@@ -31,6 +31,43 @@ def sha(path):
         for chunk in iter(lambda: stream.read(1024 * 1024), b''): h.update(chunk)
     return h.hexdigest()
 
+def validate_checksum_manifest(root, manifest):
+    if not manifest.is_file():
+        raise SystemExit(f'Missing cached checksum manifest: {manifest}')
+    for line in manifest.read_text().splitlines():
+        if not line.strip():
+            continue
+        fields = line.split(None, 1)
+        if len(fields) != 2:
+            raise SystemExit(f'Invalid cached checksum line: {line!r}')
+        expected, relative = fields
+        relative = relative.strip().lstrip('*')
+        candidate = root / relative
+        if not candidate.is_file() or sha(candidate) != expected:
+            raise SystemExit(f'Cached native artifact checksum mismatch: {candidate}')
+
+def validate_cached_native(build, env):
+    artifacts = build / 'artifacts'
+    required = [
+        artifacts / 'adb/adb',
+        artifacts / 'adb/libusb-1.0.0.dylib',
+        artifacts / 'scrcpy/scrcpy-server-v4.1',
+        artifacts / 'scrcpy/scrcpy-server-4.1-gb-sync.1',
+        artifacts / 'quic-backend/gb-quic-backend-android-arm64',
+        artifacts / 'quic-backend/libgalaxybridge_quic_backend-macos-arm64.a',
+    ]
+    missing = [str(path) for path in required if not path.is_file()]
+    if missing:
+        raise SystemExit('Cached native artifact set is incomplete: ' + ', '.join(missing))
+
+    validate_checksum_manifest(artifacts / 'adb', artifacts / 'adb/SHA256SUMS')
+    validate_checksum_manifest(artifacts / 'scrcpy', artifacts / 'scrcpy/SHA256SUMS')
+    producer = artifacts / 'scrcpy/scrcpy-server-4.1-gb-sync.1'
+    producer_pin = artifacts / 'quic-backend/PRODUCER_SHA256.txt'
+    if not producer_pin.is_file() or producer_pin.read_text().strip() != sha(producer):
+        raise SystemExit('Cached QUIC backend producer pin does not match cached scrcpy producer.')
+    generate_pins(build)
+
 def generate_pins(build):
     artifacts = build / 'artifacts'
     paths = {
@@ -58,6 +95,10 @@ def generate_pins(build):
 
 def native(build, env):
     artifacts = build / 'artifacts'; artifacts.mkdir(parents=True, exist_ok=True)
+    if env.get('GB_REUSE_NATIVE_ARTIFACTS') == '1':
+        validate_cached_native(build, env)
+        print('Reused validated native artifacts from CI cache.')
+        return
     for component, script in [('scrcpy', 'build-scrcpy-gb-sync.sh'), ('quic-backend', 'build-quic-backend.sh')]:
         settings = dict(env, GB_OUTPUT_DIR=str(artifacts / component), GB_BUILD_DIR=str(build / 'native-build' / component), GB_PRODUCER_JAR=str(artifacts / 'scrcpy/scrcpy-server-4.1-gb-sync.1'))
         run(['bash', ROOT / 'scripts' / script], settings)

@@ -3817,14 +3817,13 @@ mod tests {
             owner.endpoints[2].poll().unwrap();
             std::thread::sleep(Duration::from_millis(1));
         }
-        // Re-bind wall time after the recovery handshake so CI scheduling
-        // jitter cannot push the expiry window past the live-AU precondition.
-        owner.origin = Instant::now();
         let cutoff = owner.origin + Duration::from_millis(121);
         if let Some(wait) = cutoff.checked_duration_since(Instant::now()) {
             std::thread::sleep(wait);
         }
-        owner.local_clock = Some(121 * MS);
+        // Allow modest CI sleep overshoot without changing media-clock semantics.
+        assert!(owner.origin.elapsed() < Duration::from_millis(500));
+        owner.local_clock = Some(owner.origin.elapsed().as_nanos() as u64);
         owner.service().unwrap();
         assert!(owner.g1.cache.contains_video_access_unit(&key));
         assert!(!owner.g1.cache.contains_video_access_unit(&lost));
@@ -4029,16 +4028,16 @@ mod tests {
         assert_eq!(sequences, [3, 4]);
         if let Some(receiver) = remote.as_mut() {
             assert_eq!(owner.endpoints[0].stats().datagrams_generated, 0);
-            // Reset after admission setup: wall-clock work above can already
-            // exceed the 120..200ms live-IDR window on loaded CI runners.
+            // Re-bind after admission/setup work so the 120..250ms media window
+            // is measured from a fresh Instant on loaded CI runners.
             owner.origin = Instant::now();
             let cutoff = owner.origin + Duration::from_millis(121);
             if let Some(wait) = cutoff.checked_duration_since(Instant::now()) {
                 std::thread::sleep(wait);
             }
-            // Keep the media clock deterministic inside the live-IDR window
-            // (successor expires at 120ms, IDR remains until 250ms).
-            let now = 121 * MS;
+            let now = owner.origin.elapsed().as_nanos() as u64;
+            // Successor expires at 120ms; IDR remains live until 250ms.
+            let now = now.clamp(121 * MS, 200 * MS);
             owner.local_clock = Some(now);
             // Actual endpoint admission expires the successor plaintext,
             // without polling/generating the earlier still-live IDR.

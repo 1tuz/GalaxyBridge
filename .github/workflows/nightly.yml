@@ -1,0 +1,176 @@
+name: Nightly Heavy
+
+on:
+  schedule:
+    # 02:00 UTC+3. Scheduled runs use UTC.
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: nightly-heavy
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    name: Check for code changes
+    runs-on: ubuntu-latest
+    outputs:
+      run-heavy: ${{ steps.detect.outputs.run-heavy }}
+      base-sha: ${{ steps.detect.outputs.base-sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: detect
+        name: Compare with last successful nightly
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            printf 'run-heavy=true\nbase-sha=manual\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          response=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/nightly.yml/runs?branch=main&status=success&per_page=1")
+          last=$(python3 -c 'import json,sys; runs=json.load(sys.stdin).get("workflow_runs", []); print(runs[0]["head_sha"] if runs else "")' <<< "$response")
+
+          if [[ -z "$last" ]] || ! git cat-file -e "$last^{commit}" 2>/dev/null; then
+            printf 'run-heavy=true\nbase-sha=none\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          printf 'base-sha=%s\n' "$last" >> "$GITHUB_OUTPUT"
+          if git diff --quiet "$last" HEAD -- \
+            android \
+            macos \
+            Sources \
+            native \
+            protocol \
+            third_party \
+            Package.swift \
+            Package.resolved \
+            CMakeLists.txt \
+            CMakePresets.json \
+            scripts \
+            .github/workflows/ci.yml \
+            .github/workflows/nightly.yml; then
+            echo 'No code/build changes since the last successful nightly.'
+            echo 'run-heavy=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Code/build changes detected; running full regression suite.'
+            git diff --name-only "$last" HEAD
+            echo 'run-heavy=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  heavy:
+    name: Full regression
+    needs: changes
+    if: needs.changes.outputs.run-heavy == 'true'
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      GB_BUILD_JOBS: '4'
+      RUSTUP_TOOLCHAIN: '1.92.0'
+      BUILD_DIR: out/macos-arm64-release
+      CARGO_HOME: ${{ github.workspace }}/out/macos-arm64-release/dependency-cache/cargo
+      GRADLE_USER_HOME: ${{ github.workspace }}/out/macos-arm64-release/dependency-cache/gradle
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check publication hygiene
+        run: python3 scripts/check-public-tree.py
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Prepare dependency caches
+        run: |
+          mkdir -p \
+            "$BUILD_DIR/dependency-cache/cargo" \
+            "$BUILD_DIR/dependency-cache/gradle" \
+            "$BUILD_DIR/dependency-cache/swiftpm" \
+            "$BUILD_DIR/tools" \
+            "$HOME/.rustup/toolchains" \
+            "$HOME/.rustup/tmp"
+
+      - name: Cache dependencies only
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            out/macos-arm64-release/dependency-cache/cargo
+            out/macos-arm64-release/dependency-cache/gradle
+            out/macos-arm64-release/dependency-cache/swiftpm
+            out/macos-arm64-release/tools
+            ~/.rustup/toolchains
+            ~/.rustup/tmp
+          key: nightly-deps-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved', '**/Cargo.lock', 'android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'scripts/build-tools-requirements.txt') }}
+          restore-keys: |
+            nightly-deps-v2-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Select source build toolchains
+        shell: bash
+        run: |
+          test "$(uname -m)" = arm64
+          rustup toolchain install 1.92.0 --profile minimal
+          rustup component add --toolchain 1.92.0 rustfmt
+          rustup target add --toolchain 1.92.0 aarch64-apple-darwin aarch64-linux-android
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'platforms;android-37.0' \
+            'build-tools;37.0.0' \
+            'ndk;29.0.14206865'
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/29.0.14206865" >> "$GITHUB_ENV"
+          python3 scripts/bootstrap-build-tools.py --build-dir "$BUILD_DIR"
+          echo "$PWD/$BUILD_DIR/tools/bin" >> "$GITHUB_PATH"
+
+      - name: Configure clean heavy build
+        run: cmake --preset macos-arm64-release -DGB_BUILD_JOBS=4
+
+      - name: Build native artifacts from source
+        run: |
+          rm -rf \
+            "$BUILD_DIR/artifacts/adb" \
+            "$BUILD_DIR/artifacts/scrcpy" \
+            "$BUILD_DIR/artifacts/quic-backend" \
+            "$BUILD_DIR/native-build"
+          cmake --build --preset macos-arm64-release --target native
+          echo 'GB_REUSE_NATIVE_ARTIFACTS=1' >> "$GITHUB_ENV"
+
+      - name: Build macOS app
+        run: cmake --build --preset macos-arm64-release --target macos-app
+
+      - name: Build Android APK
+        run: cmake --build --preset macos-arm64-release --target android-apk
+
+      - name: Run full automated checks
+        run: cmake --build --preset macos-arm64-release --target check
+
+      - name: Package validated builds
+        run: |
+          rm -rf "$BUILD_DIR/packages"
+          python3 scripts/public-build.py package --build-dir "$BUILD_DIR"
+          find "$BUILD_DIR/packages" -type f | sort
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nightly-validated-packages
+          path: out/macos-arm64-release/packages/
+          if-no-files-found: error
+          retention-days: 7
