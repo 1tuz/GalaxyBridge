@@ -146,6 +146,13 @@ jobs:
           restore-keys: |
             android-deps-v2-${{ runner.os }}-${{ runner.arch }}-
 
+      - name: Cache continuous Android signing identity
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: out/macos-arm64-release/continuous-android-signing
+          key: android-continuous-signing-v1-${{ runner.os }}-${{ runner.arch }}
+
       - name: Android SDK + build tools
         shell: bash
         run: |
@@ -165,6 +172,16 @@ jobs:
         run: |
           ./gradlew --no-daemon --console=plain \
             :app:testDirectDebugUnitTest --tests '*FileSendPolicyTest'
+
+      - name: Prepare continuous Android signing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GB_ANDROID_DIRECT_KEYSTORE: ${{ secrets.GB_ANDROID_DIRECT_KEYSTORE }}
+          GB_ANDROID_DIRECT_KEYSTORE_PASSWORD: ${{ secrets.GB_ANDROID_DIRECT_KEYSTORE_PASSWORD }}
+          GB_ANDROID_DIRECT_KEY_ALIAS: ${{ secrets.GB_ANDROID_DIRECT_KEY_ALIAS }}
+          GB_ANDROID_DIRECT_KEY_PASSWORD: ${{ secrets.GB_ANDROID_DIRECT_KEY_PASSWORD }}
+        run: bash scripts/prepare-continuous-android-signing.sh
 
       - name: Build Direct APK
         run: cmake --build --preset macos-arm64-release --target android-apk
