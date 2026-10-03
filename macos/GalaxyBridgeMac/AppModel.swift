@@ -1669,7 +1669,7 @@ final class AppModel: ObservableObject {
                     }
                 }
             )
-            recordings.insert(
+            _ = recordings.insert(
                 sink: recorder, deviceID: deviceID,
                 deviceName: row(id: deviceID)?.name ?? "Galaxy Bridge", id: recordingID
             )
