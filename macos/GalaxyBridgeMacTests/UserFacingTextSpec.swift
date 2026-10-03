@@ -52,12 +52,12 @@ private enum UserFacingTextSpec {
         )
         try expect(
             english.unavailableReason(for: "media_projection_consent_required"),
-            "Start screen sharing in Galaxy Bridge on your phone.",
+            "Start screen sharing in the phone app.",
             "English permission reason"
         )
         try expect(
             russian.unavailableReason(for: "media_projection_consent_required"),
-            "Запустите трансляцию экрана в Galaxy Bridge на телефоне.",
+            "Запустите трансляцию экрана в приложении на телефоне.",
             "Russian permission reason"
         )
         try expect(

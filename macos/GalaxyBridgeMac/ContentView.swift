@@ -65,11 +65,23 @@ struct ContentView: View {
                         }
                     }
             } else {
-                ContentUnavailableView(
-                    "NO_DEVICE",
-                    systemImage: "iphone.slash",
-                    description: Text("NO_DEVICE_HINT")
-                )
+                ContentUnavailableView {
+                    Label("NO_DEVICE", systemImage: "iphone.slash")
+                } description: {
+                    Text("NO_DEVICE_HINT")
+                } actions: {
+                    Button(action: model.beginPairing) {
+                        Label("PAIR_DEVICE", systemImage: "qrcode")
+                    }
+                    .buttonStyle(.borderedProminent)
+#if !GALAXYBRIDGE_APP_STORE
+                    Button {
+                        isWirelessSetupPresented = true
+                    } label: {
+                        Label("WIFI_SETUP_TITLE", systemImage: "wifi")
+                    }
+#endif
+                }
             }
         }
         .frame(minWidth: 980, minHeight: 640)
@@ -260,15 +272,17 @@ struct ContentView: View {
         .navigationTitle("GalaxyBridge")
         .toolbar {
             Button(action: model.beginPairing) {
-                Image(systemName: "qrcode")
+                Label("PAIR_DEVICE", systemImage: "qrcode")
             }
+            .accessibilityLabel("PAIR_DEVICE")
             Button(action: model.refresh) {
                 if model.isRefreshing {
                     ProgressView().controlSize(.small)
                 } else {
-                    Image(systemName: "arrow.clockwise")
+                    Label("REFRESH", systemImage: "arrow.clockwise")
                 }
             }
+            .accessibilityLabel("REFRESH")
         }
     }
 }
@@ -354,18 +368,20 @@ struct DeviceWorkspace: View {
                 .controlSize(.large)
                 .disabled(!device.isReady)
             }
-            .padding(24)
-            .background(.regularMaterial)
-            Divider()
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+            .padding(.bottom, 16)
             Picker("PANELS", selection: $selectedPanel) {
                 ForEach(Panel.allCases) { panel in
                     Label(panel.title, systemImage: panel.symbol).tag(panel)
                 }
             }
             .pickerStyle(.segmented)
-            .padding(12)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 12)
             panelContent.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .background(.ultraThinMaterial)
         .navigationTitle(device.name)
         .onChange(of: setupRequest, initial: true) { _, request in
             guard let request, request.deviceID == device.id else { return }
@@ -820,6 +836,8 @@ private struct FilesPanel: View {
             }
 #endif
         }
+        .padding(18)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .padding(18)
         .fileImporter(isPresented: $isImporterPresented, allowedContentTypes: [.data]) { result in
             if case let .success(url) = result { model.sendFile(deviceID: deviceID, url: url) }

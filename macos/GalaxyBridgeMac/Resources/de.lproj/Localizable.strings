@@ -141,17 +141,17 @@
 "RECORDING_SAVE_TITLE" = "Bildschirmaufnahme sichern";
 "RECORDING_SAVE_NAME" = "Sichern unter:";
 "CAPABILITY_REASON_GENERIC" = "Diese Funktion ist auf diesem Smartphone derzeit nicht verfügbar.";
-"CAPABILITY_REASON_SCREEN_PERMISSION" = "Starten Sie die Bildschirmfreigabe in Galaxy Bridge auf Ihrem Smartphone.";
-"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "Starten Sie die Bildschirmfreigabe in Galaxy Bridge auf Ihrem Smartphone.";
-"CAPABILITY_REASON_ACCESSIBILITY" = "Erlauben Sie Galaxy Bridge in den Einstellungen für Bedienungshilfen die Steuerung Ihres Smartphones.";
-"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "Erlauben Sie Galaxy Bridge, die Benachrichtigungen Ihres Smartphones anzuzeigen.";
+"CAPABILITY_REASON_SCREEN_PERMISSION" = "Starten Sie die Bildschirmfreigabe in der Smartphone-App.";
+"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "Starten Sie die Bildschirmfreigabe in der Smartphone-App.";
+"CAPABILITY_REASON_ACCESSIBILITY" = "Erlauben Sie der Smartphone-App in den Einstellungen für Bedienungshilfen die Steuerung Ihres Smartphones.";
+"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "Erlauben Sie der Smartphone-App, die Benachrichtigungen Ihres Smartphones anzuzeigen.";
 "CAPABILITY_REASON_STORAGE_FOLDER" = "Wählen Sie einen Ordner auf dem Smartphone für die Dateifreigabe.";
-"CAPABILITY_REASON_AUDIO_PERMISSION" = "Erlauben Sie Galaxy Bridge, Audio von Ihrem Smartphone zu teilen.";
+"CAPABILITY_REASON_AUDIO_PERMISSION" = "Erlauben Sie der Smartphone-App, Audio von Ihrem Smartphone zu teilen.";
 "CAPABILITY_REASON_AUDIO_NOT_RUNNING" = "Starten Sie die Bildschirmfreigabe mit Audio auf Ihrem Smartphone.";
 "CAPABILITY_REASON_NOTIFICATION_ACTIONS_ONLY" = "Sie können Nachrichten über die Aktionen in den Smartphone-Benachrichtigungen beantworten.";
-"CAPABILITY_REASON_CALL_PERMISSION" = "Erlauben Sie Galaxy Bridge, Anrufe auf Ihrem Smartphone zu steuern.";
+"CAPABILITY_REASON_CALL_PERMISSION" = "Erlauben Sie der Smartphone-App, Anrufe auf Ihrem Smartphone zu steuern.";
 "CAPABILITY_REASON_DIALER_ROLE" = "Wählen Sie Galaxy Bridge für Anrufe aus, um die vollständige Anrufsteuerung zu aktivieren.";
-"CAPABILITY_REASON_CAMERA_PERMISSION" = "Erlauben Sie Galaxy Bridge den Zugriff auf die Kamera Ihres Smartphones.";
+"CAPABILITY_REASON_CAMERA_PERMISSION" = "Erlauben Sie der Smartphone-App den Zugriff auf die Kamera Ihres Smartphones.";
 "CAPABILITY_REASON_CABLE_REQUIRED" = "Diese Funktion ist per Kabel oder drahtlosem Debugging verfügbar. Aktivieren Sie drahtloses Debugging auf Ihrem Smartphone, um die WLAN-Verbindung vollständig zu nutzen.";
 "SMS_NOTIFICATION_REPLY_TITLE" = "Über Benachrichtigungen antworten";
 "SMS_NOTIFICATION_REPLY_HINT" = "Galaxy Bridge behält Ihre gewohnte Nachrichten-App bei. Öffnen Sie den Tab „Benachrichtigungen“ und wählen Sie bei einer Nachricht „Antworten“.";
@@ -273,7 +273,7 @@
 
 "RECORDING_WITHOUT_AUDIO" = "Nur Video wird aufgenommen: Telefonaudio ist nicht verfügbar.";
 "FILES_FROM_PHONE" = "Vom Telefon";
-"FILES_RECEIVE_HINT" = "Wähle auf deinem Telefon in Galaxy Bridge eine Datei aus, um sie an diesen Mac zu senden. Dateien werden im Ordner „Downloads“ gespeichert.";
+"FILES_RECEIVE_HINT" = "Wähle auf deinem Telefon in der Smartphone-App eine Datei aus, um sie an diesen Mac zu senden. Dateien werden im Ordner „Downloads“ gespeichert.";
 "CALL_STATE_UNKNOWN" = "Anrufstatus nicht verfügbar";
 "CALL_STATE_IDLE" = "Kein aktiver Anruf";
 "CALL_STATE_RINGING" = "Eingehender Anruf";

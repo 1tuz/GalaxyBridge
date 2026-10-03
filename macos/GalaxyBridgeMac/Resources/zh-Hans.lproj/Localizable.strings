@@ -142,17 +142,17 @@
 "RECORDING_SAVE_TITLE" = "保存屏幕录制";
 "RECORDING_SAVE_NAME" = "另存为：";
 "CAPABILITY_REASON_GENERIC" = "此功能目前在此手机上不可用。";
-"CAPABILITY_REASON_SCREEN_PERMISSION" = "在手机上的 Galaxy Bridge 中启动屏幕共享。";
-"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "在手机上的 Galaxy Bridge 中启动屏幕共享。";
-"CAPABILITY_REASON_ACCESSIBILITY" = "允许 Galaxy Bridge 在其辅助功能设置中控制您的手机。";
-"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "允许 Galaxy Bridge 显示您的手机通知。";
+"CAPABILITY_REASON_SCREEN_PERMISSION" = "在手机应用中启动屏幕共享。";
+"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "在手机应用中启动屏幕共享。";
+"CAPABILITY_REASON_ACCESSIBILITY" = "允许手机应用在其辅助功能设置中控制您的手机。";
+"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "允许手机应用显示您的手机通知。";
 "CAPABILITY_REASON_STORAGE_FOLDER" = "选择手机文件夹进行文件共享。";
-"CAPABILITY_REASON_AUDIO_PERMISSION" = "允许 Galaxy Bridge 共享手机中的音频。";
+"CAPABILITY_REASON_AUDIO_PERMISSION" = "允许手机应用共享手机中的音频。";
 "CAPABILITY_REASON_AUDIO_NOT_RUNNING" = "在手机上开始使用音频进行屏幕共享。";
 "CAPABILITY_REASON_NOTIFICATION_ACTIONS_ONLY" = "您可以通过电话通知操作回复消息。";
-"CAPABILITY_REASON_CALL_PERMISSION" = "允许 Galaxy Bridge 控制您手机上的通话。";
+"CAPABILITY_REASON_CALL_PERMISSION" = "允许手机应用控制您手机上的通话。";
 "CAPABILITY_REASON_DIALER_ROLE" = "呼叫时选择 Galaxy Bridge 以启用完整的呼叫控制。";
-"CAPABILITY_REASON_CAMERA_PERMISSION" = "允许Galaxy Bridge使用您的手机摄像头。";
+"CAPABILITY_REASON_CAMERA_PERMISSION" = "允许手机应用使用您的手机摄像头。";
 "CAPABILITY_REASON_CABLE_REQUIRED" = "此功能通过有线或无线调试工作。在手机上启用无线调试以实现完整的 Wi-Fi 连接。";
 "SMS_NOTIFICATION_REPLY_TITLE" = "通知回复";
 "SMS_NOTIFICATION_REPLY_HINT" = "Galaxy Bridge 保留您常用的消息应用程序。打开“通知”选项卡并在消息通知上使用“回复”。";
@@ -275,7 +275,7 @@
 
 "RECORDING_WITHOUT_AUDIO" = "仅录制视频：手机音频不可用。";
 "FILES_FROM_PHONE" = "来自手机";
-"FILES_RECEIVE_HINT" = "在手机上的 Galaxy Bridge 中选择文件，将其发送到这台 Mac。文件将保存到“下载”文件夹。";
+"FILES_RECEIVE_HINT" = "在手机应用中选择文件，将其发送到这台 Mac。文件将保存到“下载”文件夹。";
 "CALL_STATE_UNKNOWN" = "通话状态不可用";
 "CALL_STATE_IDLE" = "当前没有通话";
 "CALL_STATE_RINGING" = "来电中";

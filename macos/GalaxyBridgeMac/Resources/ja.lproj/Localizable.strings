@@ -142,17 +142,17 @@
 "RECORDING_SAVE_TITLE" = "画面録画を保存する";
 "RECORDING_SAVE_NAME" = "名前を付けて保存:";
 "CAPABILITY_REASON_GENERIC" = "この機能は現在この電話では利用できません。";
-"CAPABILITY_REASON_SCREEN_PERMISSION" = "携帯電話の Galaxy Bridge で画面共有を開始します。";
-"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "携帯電話の Galaxy Bridge で画面共有を開始します。";
-"CAPABILITY_REASON_ACCESSIBILITY" = "Galaxy Bridge がアクセシビリティ設定で携帯電話を制御できるようにします。";
-"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "Galaxy Bridge に電話通知の表示を許可します。";
+"CAPABILITY_REASON_SCREEN_PERMISSION" = "携帯電話のアプリで画面共有を開始します。";
+"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "携帯電話のアプリで画面共有を開始します。";
+"CAPABILITY_REASON_ACCESSIBILITY" = "電話アプリがアクセシビリティ設定で携帯電話を制御できるようにします。";
+"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "電話アプリに電話通知の表示を許可します。";
 "CAPABILITY_REASON_STORAGE_FOLDER" = "ファイル共有用の電話フォルダーを選択します。";
-"CAPABILITY_REASON_AUDIO_PERMISSION" = "Galaxy Bridge が携帯電話からの音声を共有できるようにします。";
+"CAPABILITY_REASON_AUDIO_PERMISSION" = "電話アプリが携帯電話からの音声を共有できるようにします。";
 "CAPABILITY_REASON_AUDIO_NOT_RUNNING" = "携帯電話で音声付きの画面共有を開始します。";
 "CAPABILITY_REASON_NOTIFICATION_ACTIONS_ONLY" = "電話通知アクションを通じてメッセージに返信できます。";
-"CAPABILITY_REASON_CALL_PERMISSION" = "Galaxy Bridge による電話の通話制御を許可します。";
+"CAPABILITY_REASON_CALL_PERMISSION" = "電話アプリによる電話の通話制御を許可します。";
 "CAPABILITY_REASON_DIALER_ROLE" = "完全な通話制御を有効にするには、通話に Galaxy Bridge を選択します。";
-"CAPABILITY_REASON_CAMERA_PERMISSION" = "Galaxy Bridge に携帯電話のカメラの使用を許可します。";
+"CAPABILITY_REASON_CAMERA_PERMISSION" = "電話アプリに携帯電話のカメラの使用を許可します。";
 "CAPABILITY_REASON_CABLE_REQUIRED" = "この機能は、ケーブルまたはワイヤレスのデバッグ上で動作します。完全な Wi-Fi 接続については、携帯電話でワイヤレス デバッグを有効にします。";
 "SMS_NOTIFICATION_REPLY_TITLE" = "通知からの返信";
 "SMS_NOTIFICATION_REPLY_HINT" = "Galaxy Bridge は、通常のメッセージング アプリを維持します。 [通知] タブを開き、メッセージ通知で [返信] を使用します。";
@@ -275,7 +275,7 @@
 
 "RECORDING_WITHOUT_AUDIO" = "映像のみ録画中です。スマートフォンの音声は利用できません。";
 "FILES_FROM_PHONE" = "スマートフォンから";
-"FILES_RECEIVE_HINT" = "スマートフォンのGalaxy Bridgeでファイルを選択すると、このMacに送信できます。ファイルは「ダウンロード」に保存されます。";
+"FILES_RECEIVE_HINT" = "スマートフォンのアプリでファイルを選択すると、このMacに送信できます。ファイルは「ダウンロード」に保存されます。";
 "CALL_STATE_UNKNOWN" = "通話状況を確認できません";
 "CALL_STATE_IDLE" = "通話はありません";
 "CALL_STATE_RINGING" = "着信中";

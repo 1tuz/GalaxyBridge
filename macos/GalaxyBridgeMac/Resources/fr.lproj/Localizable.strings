@@ -141,17 +141,17 @@
 "RECORDING_SAVE_TITLE" = "Enregistrer la capture vidéo de l’écran";
 "RECORDING_SAVE_NAME" = "Enregistrer sous :";
 "CAPABILITY_REASON_GENERIC" = "Cette fonctionnalité est actuellement indisponible sur ce téléphone.";
-"CAPABILITY_REASON_SCREEN_PERMISSION" = "Démarrez le partage d’écran dans Galaxy Bridge sur votre téléphone.";
-"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "Démarrez le partage d’écran dans Galaxy Bridge sur votre téléphone.";
-"CAPABILITY_REASON_ACCESSIBILITY" = "Autorisez Galaxy Bridge à contrôler votre téléphone dans les paramètres d’accessibilité.";
-"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "Autorisez Galaxy Bridge à afficher les notifications de votre téléphone.";
+"CAPABILITY_REASON_SCREEN_PERMISSION" = "Démarrez le partage d’écran dans l’app téléphone.";
+"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "Démarrez le partage d’écran dans l’app téléphone.";
+"CAPABILITY_REASON_ACCESSIBILITY" = "Autorisez l’app téléphone à contrôler votre téléphone dans les paramètres d’accessibilité.";
+"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "Autorisez l’app téléphone à afficher les notifications de votre téléphone.";
 "CAPABILITY_REASON_STORAGE_FOLDER" = "Choisissez un dossier du téléphone pour le partage de fichiers.";
-"CAPABILITY_REASON_AUDIO_PERMISSION" = "Autorisez Galaxy Bridge à partager le son de votre téléphone.";
+"CAPABILITY_REASON_AUDIO_PERMISSION" = "Autorisez l’app téléphone à partager le son de votre téléphone.";
 "CAPABILITY_REASON_AUDIO_NOT_RUNNING" = "Démarrez le partage d’écran avec le son sur votre téléphone.";
 "CAPABILITY_REASON_NOTIFICATION_ACTIONS_ONLY" = "Vous pouvez répondre aux messages à l’aide des actions des notifications du téléphone.";
-"CAPABILITY_REASON_CALL_PERMISSION" = "Autorisez Galaxy Bridge à contrôler les appels sur votre téléphone.";
+"CAPABILITY_REASON_CALL_PERMISSION" = "Autorisez l’app téléphone à contrôler les appels sur votre téléphone.";
 "CAPABILITY_REASON_DIALER_ROLE" = "Choisissez Galaxy Bridge pour les appels afin d’activer toutes les commandes d’appel.";
-"CAPABILITY_REASON_CAMERA_PERMISSION" = "Autorisez Galaxy Bridge à utiliser la caméra de votre téléphone.";
+"CAPABILITY_REASON_CAMERA_PERMISSION" = "Autorisez l’app téléphone à utiliser la caméra de votre téléphone.";
 "CAPABILITY_REASON_CABLE_REQUIRED" = "Cette fonctionnalité utilise un câble ou le débogage sans fil. Activez le débogage sans fil sur votre téléphone pour bénéficier de la connexion Wi-Fi complète.";
 "SMS_NOTIFICATION_REPLY_TITLE" = "Répondre depuis les notifications";
 "SMS_NOTIFICATION_REPLY_HINT" = "Galaxy Bridge conserve votre application de messagerie habituelle. Ouvrez l’onglet Notifications et choisissez Répondre sur une notification de message.";
@@ -273,7 +273,7 @@
 
 "RECORDING_WITHOUT_AUDIO" = "Enregistrement vidéo uniquement : le son du téléphone est indisponible.";
 "FILES_FROM_PHONE" = "Depuis le téléphone";
-"FILES_RECEIVE_HINT" = "Sur votre téléphone, sélectionnez un fichier dans Galaxy Bridge pour l’envoyer à ce Mac. Les fichiers sont enregistrés dans Téléchargements.";
+"FILES_RECEIVE_HINT" = "Sur votre téléphone, sélectionnez un fichier dans l’app téléphone pour l’envoyer à ce Mac. Les fichiers sont enregistrés dans Téléchargements.";
 "CALL_STATE_UNKNOWN" = "État de l’appel indisponible";
 "CALL_STATE_IDLE" = "Aucun appel en cours";
 "CALL_STATE_RINGING" = "Appel entrant";

@@ -66,6 +66,8 @@ jobs:
             CMakePresets.json \
             scripts \
             .github/workflows/ci.yml \
+            .github/workflows/build-android.yml \
+            .github/workflows/build-macos.yml \
             .github/workflows/nightly.yml; then
             echo 'No code/build changes since the last successful nightly.'
             echo 'run-heavy=false' >> "$GITHUB_OUTPUT"

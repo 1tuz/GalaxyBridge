@@ -142,17 +142,17 @@
 "RECORDING_SAVE_TITLE" = "حفظ تسجيل الشاشة";
 "RECORDING_SAVE_NAME" = "حفظ بإسم:";
 "CAPABILITY_REASON_GENERIC" = "هذه الميزة غير متوفرة حاليًا على هذا الهاتف.";
-"CAPABILITY_REASON_SCREEN_PERMISSION" = "ابدأ مشاركة الشاشة في Galaxy Bridge على هاتفك.";
-"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "ابدأ مشاركة الشاشة في Galaxy Bridge على هاتفك.";
-"CAPABILITY_REASON_ACCESSIBILITY" = "اسمح لـ Galaxy Bridge بالتحكم في هاتفك من خلال إعدادات إمكانية الوصول الخاصة به.";
-"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "اسمح لـ Galaxy Bridge بإظهار إشعارات هاتفك.";
+"CAPABILITY_REASON_SCREEN_PERMISSION" = "ابدأ مشاركة الشاشة في تطبيق الهاتف.";
+"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "ابدأ مشاركة الشاشة في تطبيق الهاتف.";
+"CAPABILITY_REASON_ACCESSIBILITY" = "اسمح لتطبيق الهاتف بالتحكم في هاتفك من خلال إعدادات إمكانية الوصول الخاصة به.";
+"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "اسمح لتطبيق الهاتف بإظهار إشعارات هاتفك.";
 "CAPABILITY_REASON_STORAGE_FOLDER" = "اختر مجلد هاتف لمشاركة الملفات.";
-"CAPABILITY_REASON_AUDIO_PERMISSION" = "اسمح لـ Galaxy Bridge بمشاركة الصوت من هاتفك.";
+"CAPABILITY_REASON_AUDIO_PERMISSION" = "اسمح لتطبيق الهاتف بمشاركة الصوت من هاتفك.";
 "CAPABILITY_REASON_AUDIO_NOT_RUNNING" = "ابدأ مشاركة الشاشة بالصوت على هاتفك.";
 "CAPABILITY_REASON_NOTIFICATION_ACTIONS_ONLY" = "يمكنك الرد على الرسائل من خلال إجراءات الإشعارات عبر الهاتف.";
-"CAPABILITY_REASON_CALL_PERMISSION" = "اسمح لـ Galaxy Bridge بالتحكم في المكالمات على هاتفك.";
+"CAPABILITY_REASON_CALL_PERMISSION" = "اسمح لتطبيق الهاتف بالتحكم في المكالمات على هاتفك.";
 "CAPABILITY_REASON_DIALER_ROLE" = "اختر Galaxy Bridge للمكالمات لتمكين التحكم الكامل في المكالمات.";
-"CAPABILITY_REASON_CAMERA_PERMISSION" = "اسمح لـ Galaxy Bridge باستخدام كاميرا هاتفك.";
+"CAPABILITY_REASON_CAMERA_PERMISSION" = "اسمح لتطبيق الهاتف باستخدام كاميرا هاتفك.";
 "CAPABILITY_REASON_CABLE_REQUIRED" = "تعمل هذه الميزة عبر تصحيح الأخطاء عبر الكابل أو الشبكة اللاسلكية. قم بتمكين تصحيح الأخطاء اللاسلكية على هاتفك لاتصال Wi-Fi الكامل.";
 "SMS_NOTIFICATION_REPLY_TITLE" = "الرد من الإخطارات";
 "SMS_NOTIFICATION_REPLY_HINT" = "يحتفظ Galaxy Bridge بتطبيق المراسلة المعتاد. افتح علامة تبويب الإشعارات واستخدم الرد على إشعار الرسالة.";
@@ -275,7 +275,7 @@
 
 "RECORDING_WITHOUT_AUDIO" = "يجري تسجيل الفيديو فقط: صوت الهاتف غير متاح.";
 "FILES_FROM_PHONE" = "من الهاتف";
-"FILES_RECEIVE_HINT" = "على هاتفك، اختر ملفًا في Galaxy Bridge لإرساله إلى جهاز Mac هذا. تُحفظ الملفات في التنزيلات.";
+"FILES_RECEIVE_HINT" = "على هاتفك، اختر ملفًا في تطبيق الهاتف لإرساله إلى جهاز Mac هذا. تُحفظ الملفات في التنزيلات.";
 "CALL_STATE_UNKNOWN" = "حالة المكالمة غير متاحة";
 "CALL_STATE_IDLE" = "لا توجد مكالمة نشطة";
 "CALL_STATE_RINGING" = "مكالمة واردة";

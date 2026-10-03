@@ -142,17 +142,17 @@
 "RECORDING_SAVE_TITLE" = "화면 녹화 저장";
 "RECORDING_SAVE_NAME" = "다른 이름으로 저장:";
 "CAPABILITY_REASON_GENERIC" = "이 기능은 현재 이 전화기에서 사용할 수 없습니다.";
-"CAPABILITY_REASON_SCREEN_PERMISSION" = "휴대폰의 Galaxy Bridge에서 화면 공유를 시작하세요.";
-"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "휴대폰의 Galaxy Bridge에서 화면 공유를 시작하세요.";
-"CAPABILITY_REASON_ACCESSIBILITY" = "Galaxy Bridge가 접근성 설정에서 휴대폰을 제어할 수 있도록 허용하세요.";
-"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "Galaxy Bridge가 휴대폰 알림을 표시하도록 허용하세요.";
+"CAPABILITY_REASON_SCREEN_PERMISSION" = "휴대폰 앱에서 화면 공유를 시작하세요.";
+"CAPABILITY_REASON_SCREEN_NOT_RUNNING" = "휴대폰 앱에서 화면 공유를 시작하세요.";
+"CAPABILITY_REASON_ACCESSIBILITY" = "휴대폰 앱이 접근성 설정에서 휴대폰을 제어할 수 있도록 허용하세요.";
+"CAPABILITY_REASON_NOTIFICATION_ACCESS" = "휴대폰 앱이 휴대폰 알림을 표시하도록 허용하세요.";
 "CAPABILITY_REASON_STORAGE_FOLDER" = "파일 공유를 위한 휴대폰 폴더를 선택하세요.";
-"CAPABILITY_REASON_AUDIO_PERMISSION" = "Galaxy Bridge가 휴대폰에서 오디오를 공유하도록 허용합니다.";
+"CAPABILITY_REASON_AUDIO_PERMISSION" = "휴대폰 앱이 휴대폰에서 오디오를 공유하도록 허용합니다.";
 "CAPABILITY_REASON_AUDIO_NOT_RUNNING" = "휴대폰의 오디오로 화면 공유를 시작합니다.";
 "CAPABILITY_REASON_NOTIFICATION_ACTIONS_ONLY" = "전화 알림 동작을 통해 메시지에 답장할 수 있습니다.";
-"CAPABILITY_REASON_CALL_PERMISSION" = "Galaxy Bridge가 전화기의 통화를 제어하도록 허용합니다.";
+"CAPABILITY_REASON_CALL_PERMISSION" = "휴대폰 앱이 전화기의 통화를 제어하도록 허용합니다.";
 "CAPABILITY_REASON_DIALER_ROLE" = "전체 통화 제어를 활성화하려면 통화에 Galaxy Bridge를 선택하세요.";
-"CAPABILITY_REASON_CAMERA_PERMISSION" = "Galaxy Bridge가 휴대폰 카메라를 사용하도록 허용합니다.";
+"CAPABILITY_REASON_CAMERA_PERMISSION" = "휴대폰 앱이 휴대폰 카메라를 사용하도록 허용합니다.";
 "CAPABILITY_REASON_CABLE_REQUIRED" = "이 기능은 케이블 또는 무선 디버깅을 통해 작동합니다. 전체 Wi-Fi 연결을 위해 휴대폰에서 무선 디버깅을 활성화하세요.";
 "SMS_NOTIFICATION_REPLY_TITLE" = "알림에서 답장하기";
 "SMS_NOTIFICATION_REPLY_HINT" = "Galaxy Bridge는 일반적인 메시징 앱을 유지합니다. 알림 탭을 열고 메시지 알림에 답장을 사용하세요.";
@@ -275,7 +275,7 @@
 
 "RECORDING_WITHOUT_AUDIO" = "영상만 녹화 중입니다. 휴대전화 오디오는 사용할 수 없습니다.";
 "FILES_FROM_PHONE" = "휴대전화에서";
-"FILES_RECEIVE_HINT" = "휴대전화의 Galaxy Bridge에서 파일을 선택하여 이 Mac으로 보내세요. 파일은 다운로드 폴더에 저장됩니다.";
+"FILES_RECEIVE_HINT" = "휴대전화 앱에서 파일을 선택하여 이 Mac으로 보내세요. 파일은 다운로드 폴더에 저장됩니다.";
 "CALL_STATE_UNKNOWN" = "통화 상태를 확인할 수 없음";
 "CALL_STATE_IDLE" = "진행 중인 통화 없음";
 "CALL_STATE_RINGING" = "전화 수신 중";

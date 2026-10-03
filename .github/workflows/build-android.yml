@@ -1,0 +1,117 @@
+name: Build Android
+
+on:
+  workflow_call:
+    inputs:
+      release_artifacts:
+        description: Sign continuous APK and upload release artifacts
+        type: boolean
+        default: false
+    secrets:
+      GB_ANDROID_DIRECT_KEYSTORE:
+        required: false
+      GB_ANDROID_DIRECT_KEYSTORE_PASSWORD:
+        required: false
+      GB_ANDROID_DIRECT_KEY_ALIAS:
+        required: false
+      GB_ANDROID_DIRECT_KEY_PASSWORD:
+        required: false
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      BUILD_DIR: out/macos-arm64-release
+      GRADLE_USER_HOME: ${{ github.workspace }}/out/macos-arm64-release/dependency-cache/gradle
+      RELEASE_ARTIFACTS: ${{ inputs.release_artifacts || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check publication hygiene
+        run: python3 scripts/check-public-tree.py
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Prepare Android cache directories
+        run: |
+          mkdir -p \
+            "$BUILD_DIR/dependency-cache/gradle" \
+            "$BUILD_DIR/tools"
+
+      - name: Cache Gradle + build tools
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            out/macos-arm64-release/dependency-cache/gradle
+            out/macos-arm64-release/tools
+          key: android-deps-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'scripts/build-tools-requirements.txt') }}
+          restore-keys: |
+            android-deps-v2-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Cache continuous Android signing identity
+        if: env.RELEASE_ARTIFACTS == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: out/macos-arm64-release/continuous-android-signing
+          key: android-continuous-signing-v1-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Android SDK + build tools
+        shell: bash
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            'platforms;android-37.0' \
+            'build-tools;37.0.0'
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          python3 scripts/bootstrap-build-tools.py --build-dir "$BUILD_DIR"
+          echo "$PWD/$BUILD_DIR/tools/bin" >> "$GITHUB_PATH"
+
+      - name: Configure CMake
+        run: cmake --preset macos-arm64-release -DGB_BUILD_JOBS=4
+
+      - name: Fast Android contract check
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon --console=plain \
+            :app:testDirectDebugUnitTest --tests '*FileSendPolicyTest'
+
+      - name: Prepare continuous Android signing
+        if: env.RELEASE_ARTIFACTS == 'true'
+        shell: bash
+        env:
+          GB_ANDROID_DIRECT_KEYSTORE: ${{ secrets.GB_ANDROID_DIRECT_KEYSTORE }}
+          GB_ANDROID_DIRECT_KEYSTORE_PASSWORD: ${{ secrets.GB_ANDROID_DIRECT_KEYSTORE_PASSWORD }}
+          GB_ANDROID_DIRECT_KEY_ALIAS: ${{ secrets.GB_ANDROID_DIRECT_KEY_ALIAS }}
+          GB_ANDROID_DIRECT_KEY_PASSWORD: ${{ secrets.GB_ANDROID_DIRECT_KEY_PASSWORD }}
+        run: bash scripts/prepare-continuous-android-signing.sh
+
+      - name: Build Direct APK
+        run: cmake --build --preset macos-arm64-release --target android-apk
+
+      - name: Collect Android artifacts
+        if: env.RELEASE_ARTIFACTS == 'true'
+        shell: bash
+        run: |
+          mkdir -p out/artifacts-android
+          find out/macos-arm64-release/artifacts -maxdepth 1 -name 'GalaxyBridge-*.apk*' -exec cp {} out/artifacts-android/ \;
+          ls -la out/artifacts-android
+          mkdir -p "$BUILD_DIR/dependency-cache/gradle" "$BUILD_DIR/tools"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: env.RELEASE_ARTIFACTS == 'true'
+        with:
+          name: android-direct
+          path: out/artifacts-android/
+          if-no-files-found: error
+          retention-days: 14
