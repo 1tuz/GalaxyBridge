@@ -66,6 +66,7 @@ struct IncomingFileRow: Identifiable {
     var received: UInt64 = 0
     var status = ""
     var active = true
+    var publishedName = ""
 }
 
 @MainActor
@@ -507,10 +508,9 @@ final class AppModel: ObservableObject {
                     if userInitiated { isRefreshing = false }
                     return
                 }
-                if !adbRows.isEmpty {
-                    adbRows = []
-                    mergeDevices()
-                }
+                // Keep the last good ADB snapshot. Wiping rows on a transient
+                // probe failure presents as a permanent disconnect after Refresh.
+                adbRows = ADBTopologyRefreshState.rowsAfterProbeFailure(previous: adbRows)
                 for companionID in companionClients.keys { reconcileADBBindings(for: companionID) }
                 if userInitiated { lastError = error.localizedDescription }
             }
@@ -3800,6 +3800,7 @@ final class AppModel: ObservableObject {
         rows[index].received = receipt.offset
         if receipt.complete {
             rows[index].active = false
+            rows[index].publishedName = receipt.publishedName
             rows[index].status = String(localized: "FILE_COMPLETE") + "\n" + receipt.publishedName
         } else if receipt.failureReason == "transfer_cancelled" {
             rows[index].active = false

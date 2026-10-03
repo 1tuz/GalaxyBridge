@@ -212,7 +212,56 @@ do {
         true,
         "losing the ADB device must immediately publish topology fallback"
     )
+    try expectEqual(
+        ADBTopologyRefreshState.rowsAfterProbeFailure(previous: ["serial-a", "serial-b"]),
+        ["serial-a", "serial-b"],
+        "a failed Refresh probe must keep the last good ADB topology"
+    )
+    try expectEqual(
+        ADBTopologyRefreshState.rowsAfterProbeFailure(previous: [String]()),
+        [String](),
+        "an empty topology stays empty after a failed probe"
+    )
     print("PASS ADB topology refresh is serialized and publishes physical disconnects")
+
+    try expectEqual(
+        PairingListenerAdmission.admits(eventGeneration: 2, armedGeneration: 2),
+        true,
+        "current pairing listener generation is admitted"
+    )
+    try expectEqual(
+        PairingListenerAdmission.admits(eventGeneration: 1, armedGeneration: 2),
+        false,
+        "stale pairing listener events must not kill a fresh re-pair session"
+    )
+    try expectEqual(
+        PairingListenerAdmission.admits(eventGeneration: 0, armedGeneration: 0),
+        false,
+        "unarmed pairing listener generation admits nothing"
+    )
+    print("PASS PairingListenerAdmission rejects stale re-pair listener events")
+
+    try expectEqual(
+        GalleryReceivedPresentation.isImageFile(name: "IMG_001.HEIC"),
+        true,
+        "HEIC transfers count as gallery images"
+    )
+    try expectEqual(
+        GalleryReceivedPresentation.isImageFile(name: "notes.pdf"),
+        false,
+        "non-image transfers stay out of gallery fallback"
+    )
+    try expectEqual(
+        GalleryReceivedPresentation.shouldShowReceivedFallback(adbSerial: nil, receivedImageCount: 2),
+        true,
+        "companion-only devices must surface received photos in Gallery"
+    )
+    try expectEqual(
+        GalleryReceivedPresentation.shouldShowReceivedFallback(adbSerial: "serial", receivedImageCount: 2),
+        false,
+        "ADB-bound devices prefer phone MediaStore browse"
+    )
+    print("PASS GalleryReceivedPresentation surfaces received photos without ADB")
 
     try expectEqual(
         TransportSelector.presented(

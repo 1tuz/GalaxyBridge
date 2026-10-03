@@ -29,6 +29,7 @@ final class PairingCoordinator: ObservableObject {
     private var expiresAt = Date.distantPast
     private var hostID = UUID()
     private var pendingCommit: PendingPairingCommit?
+    private var listenerGeneration: UInt64 = 0
 
     func start() {
         stop()
@@ -36,19 +37,42 @@ final class PairingCoordinator: ObservableObject {
             token = try Self.randomBytes(count: PairingQRCode.tokenLength)
             expiresAt = Date().addingTimeInterval(PairingQRCode.maximumLifetime)
             hostID = Self.persistentHostID()
+            listenerGeneration &+= 1
+            let generation = listenerGeneration
             let listener = try NWListener(using: .tcp, on: .any)
             self.listener = listener
             listener.newConnectionHandler = { [weak self] connection in
-                Task { @MainActor in self?.accept(connection) }
+                Task { @MainActor in
+                    guard let self,
+                          PairingListenerAdmission.admits(
+                            eventGeneration: generation,
+                            armedGeneration: self.listenerGeneration
+                          ),
+                          self.listener === listener
+                    else { return }
+                    self.accept(connection)
+                }
             }
             listener.stateUpdateHandler = { [weak self, weak listener] state in
-                guard case .ready = state, let port = listener?.port else {
-                    if case let .failed(error) = state {
-                        Task { @MainActor in self?.fail(error.localizedDescription) }
+                guard let listener else { return }
+                Task { @MainActor in
+                    guard let self,
+                          PairingListenerAdmission.admits(
+                            eventGeneration: generation,
+                            armedGeneration: self.listenerGeneration
+                          ),
+                          self.listener === listener
+                    else { return }
+                    switch state {
+                    case .ready:
+                        guard let port = listener.port else { return }
+                        self.becameReady(port: port.rawValue)
+                    case let .failed(error):
+                        self.fail(error.localizedDescription)
+                    default:
+                        break
                     }
-                    return
                 }
-                Task { @MainActor in self?.becameReady(port: port.rawValue) }
             }
             listener.start(queue: DispatchQueue(label: "com.xopmc.GalaxyBridge.pairing-listener"))
         } catch {
@@ -62,9 +86,10 @@ final class PairingCoordinator: ObservableObject {
         pendingCommit = nil
         listener?.cancel()
         listener = nil
+        listenerGeneration &+= 1
         pairingURL = nil
         qrCodeImage = nil
-        if case .paired = status { return }
+        // Re-pair must leave idle so the next start() can publish a fresh QR.
         status = .idle
     }
 

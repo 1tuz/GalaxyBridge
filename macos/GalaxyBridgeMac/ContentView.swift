@@ -74,16 +74,11 @@ struct ContentView: View {
                         Label("PAIR_DEVICE", systemImage: "qrcode")
                     }
                     .buttonStyle(.borderedProminent)
-#if !GALAXYBRIDGE_APP_STORE
-                    Button {
-                        isWirelessSetupPresented = true
-                    } label: {
-                        Label("WIFI_SETUP_TITLE", systemImage: "wifi")
-                    }
-#endif
+                    .controlSize(.large)
                 }
             }
         }
+        .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 980, minHeight: 640)
         .sheet(item: $setupDevice, onDismiss: performSetupAction) { device in
             ClientSetupView(setup: model.clientSetup, deviceID: device.id, deviceName: device.name,
@@ -247,42 +242,47 @@ struct ContentView: View {
                     }
                     .frame(maxHeight: 150)
                 }
-                Divider()
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     if let device = model.row(id: model.selectedDeviceID) {
                         Button { setupDevice = device } label: {
                             Label("CLIENT_SETUP_TITLE", systemImage: "checklist")
                         }
+                        .buttonStyle(.borderless)
                     }
 #if !GALAXYBRIDGE_APP_STORE
                     Button { isWirelessSetupPresented = true } label: {
                         Label("WIFI_SETUP_TITLE", systemImage: "wifi")
                     }
+                    .buttonStyle(.borderless)
 #endif
                     Button {
                         openWindow(id: "about")
                     } label: {
                         Label("ABOUT_ENTRY", systemImage: "info.circle")
                     }
+                    .buttonStyle(.borderless)
                 }
             }
             .padding(12)
-            .background(.bar)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.background)
         }
-        .navigationTitle("GalaxyBridge")
+        .navigationTitle("Galaxy Bridge")
         .toolbar {
-            Button(action: model.beginPairing) {
-                Label("PAIR_DEVICE", systemImage: "qrcode")
-            }
-            .accessibilityLabel("PAIR_DEVICE")
-            Button(action: model.refresh) {
-                if model.isRefreshing {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Label("REFRESH", systemImage: "arrow.clockwise")
+            ToolbarItemGroup {
+                Button(action: model.beginPairing) {
+                    Label("PAIR_DEVICE", systemImage: "qrcode")
                 }
+                .accessibilityLabel("PAIR_DEVICE")
+                Button(action: model.refresh) {
+                    if model.isRefreshing {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Label("REFRESH", systemImage: "arrow.clockwise")
+                    }
+                }
+                .accessibilityLabel("REFRESH")
             }
-            .accessibilityLabel("REFRESH")
         }
     }
 }
@@ -381,7 +381,7 @@ struct DeviceWorkspace: View {
             .padding(.bottom, 12)
             panelContent.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(.ultraThinMaterial)
+        .background(.background)
         .navigationTitle(device.name)
         .onChange(of: setupRequest, initial: true) { _, request in
             guard let request, request.deviceID == device.id else { return }

@@ -22,4 +22,10 @@ public struct ADBTopologyRefreshState: Sendable {
     public static func shouldPublish<T: Equatable>(previous: T, current: T) -> Bool {
         previous != current
     }
+
+    /// A failed `adb devices` probe must not wipe the last good topology.
+    /// Clearing rows looks like a permanent disconnect after Refresh.
+    public static func rowsAfterProbeFailure<T>(previous: [T]) -> [T] {
+        previous
+    }
 }
