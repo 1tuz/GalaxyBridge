@@ -75,6 +75,7 @@ jobs:
           android_only = (
               'android/',
               'scripts/package-android-',
+              'scripts/prepare-continuous-android-signing.sh',
               'scripts/test-android-',
           )
           macos_only = (
