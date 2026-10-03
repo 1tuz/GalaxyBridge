@@ -58,10 +58,7 @@ let package = Package(
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
             ],
             path: "protocol",
-            exclude: [
-                "fixtures",
-                "swift-protobuf-config.json",
-            ],
+            exclude: ["fixtures"],
             plugins: [
                 .plugin(name: "SwiftProtobufPlugin", package: "swift-protobuf"),
             ]
