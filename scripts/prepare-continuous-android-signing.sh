@@ -18,6 +18,9 @@ if [[ -z "${BUILD_DIR:-}" ]]; then
   exit 1
 fi
 
+# Absolute path: Gradle file() resolves relative keystore paths from android/app.
+mkdir -p "$BUILD_DIR"
+BUILD_DIR="$(cd "$BUILD_DIR" && pwd)"
 dir="$BUILD_DIR/continuous-android-signing"
 keystore="$dir/continuous.jks"
 password='galaxybridge-continuous'
@@ -35,6 +38,11 @@ if [[ ! -f "$keystore" ]]; then
     -keysize 2048 \
     -validity 10000 \
     -dname 'CN=Galaxy Bridge Continuous, OU=CI, O=GalaxyBridge, L=Internet, ST=NA, C=US'
+fi
+
+if [[ ! -f "$keystore" ]]; then
+  echo "Failed to create continuous keystore at $keystore" >&2
+  exit 1
 fi
 
 if [[ -n "${GITHUB_ENV:-}" ]]; then
