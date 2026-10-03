@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Galaxy Bridge</string>
+    <string name="qs_tile_subtitle_on">Вкл</string>
+    <string name="qs_tile_subtitle_off">Выкл</string>
+    <string name="qs_tile_on_content_description">Galaxy Bridge включён</string>
+    <string name="qs_tile_off_content_description">Galaxy Bridge выключен</string>
     <string name="service_channel_name">Подключение Galaxy Bridge</string>
     <string name="service_channel_description">Поддерживает связь Galaxy Bridge с вашим Mac</string>
     <string name="service_notification_title">Galaxy Bridge готов</string>
